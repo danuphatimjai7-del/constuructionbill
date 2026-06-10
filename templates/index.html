@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0d1117">
+<title>BuildMaster Pro</title>
+<link rel="stylesheet" href="/static/css/app.css">
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="app" id="app">
+
+  <!-- STATUS BAR -->
+  <div class="status-bar">
+    <span class="status-time" id="clock">9:41</span>
+    <div class="status-icons"><span>📶</span><span>🔋</span></div>
+  </div>
+
+  <!-- ══ PAGE: HOME ══ -->
+  <div id="pg-home" class="page active">
+    <div class="header">
+      <div class="header-row">
+        <div>
+          <div class="header-title">🏗 BuildMaster</div>
+          <div class="header-sub" id="greeting">สวัสดี, กำลังโหลด...</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="header-avatar" id="user-avatar" title="ข้อมูลผู้ใช้">ส</div>
+          <button onclick="doLogout()" title="ออกจากระบบ"
+            style="background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.25);color:#f85149;border-radius:10px;padding:7px 10px;font-size:.75rem;cursor:pointer;font-family:'Kanit',sans-serif;font-weight:600;white-space:nowrap">
+            ออก
+          </button>
+        </div>
+      </div>
+      <div class="search-box">
+        <span>🔍</span>
+        <input id="search-input" placeholder="ค้นหาโครงการ วัสดุ พนักงาน..." oninput="handleSearch(this.value)">
+      </div>
+    </div>
+    <div class="scroll-area">
+      <div class="section-header">
+        <span class="section-title">ภาพรวมวันนี้</span>
+      </div>
+      <div class="stats-scroll" id="home-stats">
+        <div class="stat-card amber"><div class="stat-icon-big">🏢</div><div class="stat-num amber" id="stat-projects">—</div><div class="stat-lbl">โครงการ</div></div>
+        <div class="stat-card green"><div class="stat-icon-big">💰</div><div class="stat-num green" id="stat-income">—</div><div class="stat-lbl">รายได้รวม</div></div>
+        <div class="stat-card blue"><div class="stat-icon-big">👷</div><div class="stat-num blue" id="stat-workers">—</div><div class="stat-lbl">แรงงานวันนี้</div></div>
+        <div class="stat-card red"><div class="stat-icon-big">⚠️</div><div class="stat-num red" id="stat-delayed">—</div><div class="stat-lbl">งานล่าช้า</div></div>
+      </div>
+
+      <div class="section-header" style="margin-top:8px">
+        <span class="section-title">เมนูด่วน</span>
+      </div>
+      <div class="quick-actions">
+        <div class="qa-btn" onclick="switchTab('projects')"><div class="qa-icon">🏢</div><div class="qa-label">โครงการ</div></div>
+        <div class="qa-btn" onclick="switchTab('workers')"><div class="qa-icon">👷</div><div class="qa-label">แรงงาน</div></div>
+        <div class="qa-btn" onclick="switchTab('finance')"><div class="qa-icon">💰</div><div class="qa-label">การเงิน</div></div>
+        <div class="qa-btn" onclick="switchTab('more')"><div class="qa-icon">🧱</div><div class="qa-label">วัสดุ</div></div>
+      </div>
+
+      <div id="low-mat-banner" class="alert-banner alert-danger" style="margin-top:12px;display:none">
+        ⚠️ มีวัสดุใกล้หมด — กรุณาตรวจสอบ
+      </div>
+
+      <div class="section-header" style="margin-top:4px">
+        <span class="section-title">โครงการที่ดำเนินการ</span>
+        <span class="section-more" onclick="switchTab('projects')">ดูทั้งหมด</span>
+      </div>
+      <div id="home-projects">
+        <div class="loading-shimmer"></div>
+      </div>
+
+      <div class="section-header" style="margin-top:4px">
+        <span class="section-title">รายการเงินล่าสุด</span>
+      </div>
+      <div id="home-transactions">
+        <div class="loading-shimmer"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PAGE: PROJECTS ══ -->
+  <div id="pg-projects" class="page" style="display:none">
+    <div class="header">
+      <div class="header-row">
+        <div>
+          <div class="header-title" style="font-size:1.2rem">โครงการทั้งหมด</div>
+          <div class="header-sub" id="proj-count-label">กำลังโหลด...</div>
+        </div>
+        <button class="btn btn-primary" style="flex:0;padding:10px 14px;font-size:.8rem" onclick="openSheet('addProjectSheet')">+ เพิ่ม</button>
+      </div>
+      <div class="filter-row" id="proj-filter">
+        <div class="filter-chip active" onclick="filterProjects('all',this)">ทั้งหมด</div>
+        <div class="filter-chip" onclick="filterProjects('กำลังก่อสร้าง',this)">กำลังก่อสร้าง</div>
+        <div class="filter-chip" onclick="filterProjects('ล่าช้า',this)">ล่าช้า</div>
+        <div class="filter-chip" onclick="filterProjects('ตามแผน',this)">ตามแผน</div>
+        <div class="filter-chip" onclick="filterProjects('เสร็จแล้ว',this)">เสร็จแล้ว</div>
+      </div>
+    </div>
+    <div class="scroll-area" id="project-list">
+      <div class="loading-shimmer"></div>
+    </div>
+  </div>
+
+  <!-- ══ PAGE: WORKERS ══ -->
+  <div id="pg-workers" class="page" style="display:none">
+    <div class="header">
+      <div class="header-row">
+        <div>
+          <div class="header-title" style="font-size:1.2rem">แรงงาน & ทีมงาน</div>
+          <div class="header-sub" id="worker-count-label">กำลังโหลด...</div>
+        </div>
+        <button class="btn btn-primary" style="flex:0;padding:10px 14px;font-size:.8rem" onclick="openSheet('addWorkerSheet')">+ เพิ่ม</button>
+      </div>
+      <div class="filter-row">
+        <div class="filter-chip active" onclick="filterWorkers('all',this)">ทั้งหมด</div>
+        <div class="filter-chip" onclick="filterWorkers('เข้างาน',this)">เข้างาน</div>
+        <div class="filter-chip" onclick="filterWorkers('ลาป่วย',this)">ลา</div>
+        <div class="filter-chip" onclick="filterWorkers('OT',this)">OT</div>
+      </div>
+    </div>
+    <div class="scroll-area" id="worker-list">
+      <div class="loading-shimmer"></div>
+    </div>
+  </div>
+
+  <!-- ══ PAGE: FINANCE ══ -->
+  <div id="pg-finance" class="page" style="display:none">
+    <div class="header">
+      <div class="header-row">
+        <div>
+          <div class="header-title" style="font-size:1.2rem">การเงิน</div>
+          <div class="header-sub">รายรับ-รายจ่ายทั้งหมด</div>
+        </div>
+        <button class="btn btn-primary" style="flex:0;padding:10px 14px;font-size:.8rem" onclick="openSheet('addTransSheet')">+ บันทึก</button>
+      </div>
+    </div>
+    <div class="scroll-area">
+      <div style="margin:8px 20px 16px">
+        <div class="finance-summary-card">
+          <div class="fin-sum-label">กำไรสุทธิ</div>
+          <div class="fin-sum-value green" id="fin-profit">—</div>
+          <div class="fin-divider"></div>
+          <div class="fin-row-2">
+            <div><div class="fin-sum-label">รายรับ</div><div class="fin-val-sm green" id="fin-income">—</div></div>
+            <div style="text-align:right"><div class="fin-sum-label">รายจ่าย</div><div class="fin-val-sm red" id="fin-expense">—</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="section-header"><span class="section-title">รายการล่าสุด</span></div>
+      <div id="transaction-list"><div class="loading-shimmer"></div></div>
+    </div>
+  </div>
+
+  <!-- ══ PAGE: MORE ══ -->
+  <div id="pg-more" class="page" style="display:none">
+    <div class="header">
+      <div class="header-row">
+        <div>
+          <div class="header-title" style="font-size:1.2rem">เพิ่มเติม</div>
+          <div class="header-sub">วัสดุ เครื่องจักร ความปลอดภัย</div>
+        </div>
+      </div>
+    </div>
+    <div class="scroll-area">
+      <div class="section-header">
+        <span class="section-title">วัสดุ & คลังสินค้า</span>
+        <span class="section-more" onclick="openSheet('addMaterialSheet')">+ เพิ่ม</span>
+      </div>
+      <div id="material-list"><div class="loading-shimmer"></div></div>
+
+      <div class="section-header" style="margin-top:8px">
+        <span class="section-title">เครื่องจักร & อุปกรณ์</span>
+        <span class="section-more" onclick="openSheet('addEquipSheet')">+ เพิ่ม</span>
+      </div>
+      <div id="equipment-list"><div class="loading-shimmer"></div></div>
+
+      <div class="section-header" style="margin-top:8px">
+        <span class="section-title">ความปลอดภัย</span>
+        <span class="section-more" onclick="openSheet('addSafetySheet')">+ รายงาน</span>
+      </div>
+      <div id="safety-list"><div class="loading-shimmer"></div></div>
+      <div style="height:20px"></div>
+    </div>
+  </div>
+
+  <!-- ══ FAB ══ -->
+  <button class="fab" id="fab" onclick="fabAction()" style="display:none">+</button>
+
+  <!-- ══ BOTTOM NAV ══ -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" id="nav-home" onclick="switchTab('home')">
+      <span class="nav-icon">🏠</span><span class="nav-label">หน้าหลัก</span>
+    </button>
+    <button class="nav-btn" id="nav-projects" onclick="switchTab('projects')">
+      <span class="nav-icon">🏢</span><span class="nav-label">โครงการ</span>
+    </button>
+    <button class="nav-btn" id="nav-workers" onclick="switchTab('workers')">
+      <span class="nav-icon">👷</span><span class="nav-label">แรงงาน</span>
+    </button>
+    <button class="nav-btn" id="nav-finance" onclick="switchTab('finance')">
+      <span class="nav-icon">💰</span><span class="nav-label">การเงิน</span>
+    </button>
+    <button class="nav-btn" id="nav-more" onclick="switchTab('more')">
+      <span class="nav-icon">⋯</span><span class="nav-label">เพิ่มเติม</span>
+    </button>
+  </nav>
+
+  <!-- ══ SHEETS ══ -->
+
+  <!-- Add Project -->
+  <div class="sheet-overlay" id="addProjectSheet" onclick="closeSheet('addProjectSheet',event)">
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-title">🏢 เพิ่มโครงการใหม่</div>
+      <div class="sheet-body">
+        <div class="form-group"><label class="form-label">ชื่อโครงการ *</label><input class="form-input" id="p-name" placeholder="เช่น คอนโด The Luxury"></div>
+        <div class="form-group"><label class="form-label">ลูกค้า / เจ้าของโครงการ *</label><input class="form-input" id="p-client" placeholder="ชื่อบริษัทหรือบุคคล"></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">ประเภท</label>
+            <select class="form-input" id="p-type"><option>อาคาร/คอนโด</option><option>โรงงาน</option><option>ถนน/ทางหลวง</option><option>สะพาน</option><option>อื่น ๆ</option></select>
+          </div>
+          <div class="form-group"><label class="form-label">มูลค่า (บาท)</label><input class="form-input" id="p-value" type="number" placeholder="0"></div>
+        </div>
+        <div class="form-group"><label class="form-label">สถานที่</label><input class="form-input" id="p-loc" placeholder="จังหวัด / ที่ตั้ง"></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">วันเริ่มต้น</label><input class="form-input" id="p-start" type="date"></div>
+          <div class="form-group"><label class="form-label">วันส่งมอบ</label><input class="form-input" id="p-end" type="date"></div>
+        </div>
+        <div class="form-group"><label class="form-label">หมายเหตุ</label><textarea class="form-input" id="p-note" rows="2" style="resize:vertical" placeholder="รายละเอียดเพิ่มเติม..."></textarea></div>
+      </div>
+      <div class="sheet-footer">
+        <button class="btn btn-ghost" onclick="closeSheet('addProjectSheet')">ยกเลิก</button>
+        <button class="btn btn-primary" onclick="submitProject()">✓ บันทึก</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Worker -->
+  <div class="sheet-overlay" id="addWorkerSheet" onclick="closeSheet('addWorkerSheet',event)">
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-title">👷 เพิ่มพนักงานใหม่</div>
+      <div class="sheet-body">
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">ชื่อ *</label><input class="form-input" id="w-name" placeholder="ชื่อ"></div>
+          <div class="form-group"><label class="form-label">นามสกุล</label><input class="form-input" id="w-lname" placeholder="นามสกุล"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">ตำแหน่ง</label>
+            <select class="form-input" id="w-role"><option>ช่างเหล็ก</option><option>ช่างปูน</option><option>ช่างไฟฟ้า</option><option>ช่างประปา</option><option>โฟร์แมน</option><option>วิศวกร</option><option>แรงงานทั่วไป</option></select>
+          </div>
+          <div class="form-group"><label class="form-label">ค่าแรง/วัน (บาท)</label><input class="form-input" id="w-wage" type="number" placeholder="600"></div>
+        </div>
+        <div class="form-group"><label class="form-label">มอบหมายโครงการ</label>
+          <select class="form-input" id="w-project"></select>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">เบอร์โทร</label><input class="form-input" id="w-phone" placeholder="08x-xxx-xxxx"></div>
+          <div class="form-group"><label class="form-label">เลขบัตรประชาชน</label><input class="form-input" id="w-id" placeholder="x-xxxx-xxxxx-xx-x"></div>
+        </div>
+      </div>
+      <div class="sheet-footer">
+        <button class="btn btn-ghost" onclick="closeSheet('addWorkerSheet')">ยกเลิก</button>
+        <button class="btn btn-primary" onclick="submitWorker()">✓ บันทึก</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Transaction -->
+  <div class="sheet-overlay" id="addTransSheet" onclick="closeSheet('addTransSheet',event)">
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-title">💰 บันทึกรายการเงิน</div>
+      <div class="sheet-body">
+        <div class="form-group"><label class="form-label">ประเภท</label>
+          <div style="display:flex;gap:10px">
+            <label style="flex:1;display:flex;align-items:center;gap:8px;cursor:pointer;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px">
+              <input type="radio" name="tx-type" value="income" checked style="accent-color:var(--green)"> <span style="font-size:.9rem">💵 รายรับ</span>
+            </label>
+            <label style="flex:1;display:flex;align-items:center;gap:8px;cursor:pointer;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px">
+              <input type="radio" name="tx-type" value="expense" style="accent-color:var(--red)"> <span style="font-size:.9rem">💸 รายจ่าย</span>
+            </label>
+          </div>
+        </div>
+        <div class="form-group"><label class="form-label">รายการ *</label><input class="form-input" id="tx-desc" placeholder="รายละเอียด"></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">จำนวนเงิน (บาท) *</label><input class="form-input" id="tx-amount" type="number" placeholder="0"></div>
+          <div class="form-group"><label class="form-label">หมวดหมู่</label>
+            <select class="form-input" id="tx-cat"><option>ค่างวด</option><option>วัสดุ</option><option>ค่าแรง</option><option>เครื่องจักร</option><option>ค่าออกแบบ</option><option>อื่น ๆ</option></select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">โครงการ</label>
+            <select class="form-input" id="tx-project"></select>
+          </div>
+          <div class="form-group"><label class="form-label">วันที่</label><input class="form-input" id="tx-date" type="date"></div>
+        </div>
+      </div>
+      <div class="sheet-footer">
+        <button class="btn btn-ghost" onclick="closeSheet('addTransSheet')">ยกเลิก</button>
+        <button class="btn btn-primary" onclick="submitTransaction()">✓ บันทึก</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Material -->
+  <div class="sheet-overlay" id="addMaterialSheet" onclick="closeSheet('addMaterialSheet',event)">
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-title">🧱 เพิ่มวัสดุ</div>
+      <div class="sheet-body">
+        <div class="form-group"><label class="form-label">ชื่อวัสดุ *</label><input class="form-input" id="m-name" placeholder="เช่น ปูนซีเมนต์ SCG"></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">หน่วย</label>
+            <select class="form-input" id="m-unit"><option>ถุง</option><option>ตัน</option><option>ลบ.ม.</option><option>ก้อน</option><option>แผ่น</option><option>ม้วน</option><option>อัน</option><option>ถัง</option></select>
+          </div>
+          <div class="form-group"><label class="form-label">จำนวน</label><input class="form-input" id="m-qty" type="number" placeholder="0"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">ราคา/หน่วย (บาท)</label><input class="form-input" id="m-price" type="number" placeholder="0"></div>
+          <div class="form-group"><label class="form-label">ปริมาณขั้นต่ำ</label><input class="form-input" id="m-min" type="number" placeholder="0"></div>
+        </div>
+        <div class="form-group"><label class="form-label">ผู้จำหน่าย</label><input class="form-input" id="m-supplier" placeholder="ชื่อซัพพลายเออร์"></div>
+      </div>
+      <div class="sheet-footer">
+        <button class="btn btn-ghost" onclick="closeSheet('addMaterialSheet')">ยกเลิก</button>
+        <button class="btn btn-primary" onclick="submitMaterial()">✓ บันทึก</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Equipment -->
+  <div class="sheet-overlay" id="addEquipSheet" onclick="closeSheet('addEquipSheet',event)">
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-title">🚜 เพิ่มเครื่องจักร</div>
+      <div class="sheet-body">
+        <div class="form-group"><label class="form-label">ชื่อเครื่องจักร *</label><input class="form-input" id="eq-name" placeholder="เช่น รถแบ็กโฮ CAT 320"></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">ทะเบียน / Serial</label><input class="form-input" id="eq-serial" placeholder="กข-1234"></div>
+          <div class="form-group"><label class="form-label">สถานะ</label>
+            <select class="form-input" id="eq-status"><option>ว่าง</option><option>ใช้งาน</option><option>ซ่อมบำรุง</option><option>เสีย</option></select>
+          </div>
+        </div>
+        <div class="form-group"><label class="form-label">มอบหมายโครงการ</label>
+          <select class="form-input" id="eq-project"></select>
+        </div>
+      </div>
+      <div class="sheet-footer">
+        <button class="btn btn-ghost" onclick="closeSheet('addEquipSheet')">ยกเลิก</button>
+        <button class="btn btn-primary" onclick="submitEquipment()">✓ บันทึก</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Safety Incident -->
+  <div class="sheet-overlay" id="addSafetySheet" onclick="closeSheet('addSafetySheet',event)">
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-title">⛑️ รายงานอุบัติเหตุ</div>
+      <div class="sheet-body">
+        <div class="form-group"><label class="form-label">รายละเอียด *</label><textarea class="form-input" id="sf-desc" rows="3" style="resize:vertical" placeholder="อธิบายเหตุการณ์..."></textarea></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">ระดับความรุนแรง</label>
+            <select class="form-input" id="sf-sev"><option>Near Miss</option><option>เล็กน้อย</option><option>ปานกลาง</option><option>รุนแรง</option></select>
+          </div>
+          <div class="form-group"><label class="form-label">วันที่เกิดเหตุ</label><input class="form-input" id="sf-date" type="date"></div>
+        </div>
+        <div class="form-group"><label class="form-label">โครงการ</label>
+          <select class="form-input" id="sf-project"></select>
+        </div>
+      </div>
+      <div class="sheet-footer">
+        <button class="btn btn-ghost" onclick="closeSheet('addSafetySheet')">ยกเลิก</button>
+        <button class="btn btn-primary" onclick="submitSafety()">✓ บันทึก</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Project -->
+  <div class="sheet-overlay" id="editProjectSheet" onclick="closeSheet('editProjectSheet',event)">
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-title">✏️ แก้ไขโครงการ</div>
+      <div class="sheet-body">
+        <input type="hidden" id="ep-id">
+        <div class="form-group"><label class="form-label">ชื่อโครงการ</label><input class="form-input" id="ep-name"></div>
+        <div class="form-group"><label class="form-label">ลูกค้า</label><input class="form-input" id="ep-client"></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">ความคืบหน้า (%)</label><input class="form-input" id="ep-progress" type="number" min="0" max="100"></div>
+          <div class="form-group"><label class="form-label">สถานะ</label>
+            <select class="form-input" id="ep-status">
+              <option>เริ่มต้น</option><option>กำลังก่อสร้าง</option><option>ตามแผน</option><option>ล่าช้า</option><option>เกือบเสร็จ</option><option>เสร็จแล้ว</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group"><label class="form-label">มูลค่าสัญญา (บาท)</label><input class="form-input" id="ep-value" type="number"></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">วันเริ่มต้น</label><input class="form-input" id="ep-start" type="date"></div>
+          <div class="form-group"><label class="form-label">วันส่งมอบ</label><input class="form-input" id="ep-end" type="date"></div>
+        </div>
+      </div>
+      <div class="sheet-footer">
+        <button class="btn btn-ghost" onclick="closeSheet('editProjectSheet')">ยกเลิก</button>
+        <button class="btn btn-primary" onclick="updateProject()">✓ บันทึก</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+
+  <!-- CONFIRM DIALOG -->
+  <div class="sheet-overlay" id="confirmDialog" onclick="closeSheet('confirmDialog',event)">
+    <div class="sheet" style="border-radius:20px 20px 0 0">
+      <div class="sheet-handle"></div>
+      <div class="sheet-title" id="confirm-title">ยืนยันการลบ?</div>
+      <div class="sheet-body" id="confirm-body" style="padding-bottom:0;font-size:.9rem;color:var(--muted)"></div>
+      <div class="sheet-footer">
+        <button class="btn btn-ghost" onclick="closeSheet('confirmDialog')">ยกเลิก</button>
+        <button class="btn" id="confirm-ok" style="background:var(--red);color:#fff">ลบ</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<script src="/static/js/api.js"></script>
+<script src="/static/js/render.js"></script>
+<script src="/static/js/app.js"></script>
+</body>
+</html>
