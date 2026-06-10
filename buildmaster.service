@@ -1,0 +1,15 @@
+[Unit]
+Description=BuildMaster Pro Web Application
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/var/www/buildmaster
+Environment="SECRET_KEY=CHANGE_THIS_TO_RANDOM_STRING"
+ExecStart=/var/www/buildmaster/venv/bin/gunicorn -c gunicorn.conf.py app:app
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,39 @@
+## Nginx Configuration for BuildMaster Pro
+## วางไฟล์นี้ที่: /etc/nginx/sites-available/buildmaster
+## แล้วรัน: sudo ln -s /etc/nginx/sites-available/buildmaster /etc/nginx/sites-enabled/
+
+server {
+    listen 80;
+    server_name yourdomain.com www.yourdomain.com;  # ← เปลี่ยนเป็นโดเมนของคุณ
+
+    # Redirect HTTP → HTTPS (เปิดใช้หลังติดตั้ง SSL)
+    # return 301 https://$host$request_uri;
+
+    location / {
+        proxy_pass         http://127.0.0.1:5000;
+        proxy_http_version 1.1;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+        proxy_read_timeout 60;
+        client_max_body_size 10M;
+    }
+
+    # Static files — serve directly by nginx (faster)
+    location /static/ {
+        alias /var/www/buildmaster/static/;
+        expires 30d;
+        add_header Cache-Control "public, no-transform";
+    }
+}
+
+## HTTPS block (เปิดใช้หลัง certbot --nginx)
+# server {
+#     listen 443 ssl;
+#     server_name yourdomain.com;
+#     ssl_certificate     /etc/letsencrypt/live/yourdomain.com/fullchain.pem;
+#     ssl_certificate_key /etc/letsencrypt/live/yourdomain.com/privkey.pem;
+#     include /etc/letsencrypt/options-ssl-nginx.conf;
+#     ...
+# }
