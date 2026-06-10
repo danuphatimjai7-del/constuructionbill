@@ -11,3 +11,8 @@ loglevel     = "info"
 accesslog    = "-"
 errorlog     = "-"
 daemon       = False
+
+def on_starting(server):
+    """Initialize database before gunicorn starts serving requests."""
+    from app import init_db
+    init_db()
