@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0d1117">
+<title>เข้าสู่ระบบ — BuildMaster Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #1c2333;
+    --border: #30363d;
+    --amber: #f0a500;
+    --green: #3fb950;
+    --red: #f85149;
+    --text: #e6edf3;
+    --muted: #8b949e;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    height: 100%; font-family: 'Kanit', sans-serif;
+    background: var(--bg); color: var(--text);
+    overflow: hidden;
+  }
+
+  /* ── BACKGROUND ── */
+  .bg-layer {
+    position: fixed; inset: 0; z-index: 0;
+    background: radial-gradient(ellipse at 20% 20%, rgba(240,165,0,.07) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 80%, rgba(63,185,80,.05) 0%, transparent 60%);
+  }
+  .grid-lines {
+    position: fixed; inset: 0; z-index: 0;
+    background-image:
+      linear-gradient(rgba(48,54,61,.3) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(48,54,61,.3) 1px, transparent 1px);
+    background-size: 40px 40px;
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+  }
+
+  /* ── PHONE SHELL ── */
+  .shell {
+    position: relative; z-index: 1;
+    width: 390px; height: 100vh;
+    margin: 0 auto;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 40px 28px;
+  }
+
+  /* ── LOGO ── */
+  .logo-wrap {
+    text-align: center; margin-bottom: 40px;
+    animation: fadeDown .6s ease;
+  }
+  .logo-icon {
+    width: 80px; height: 80px; border-radius: 22px;
+    background: linear-gradient(135deg, #f0a500, #d97706);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2.2rem; margin: 0 auto 16px;
+    box-shadow: 0 0 0 1px rgba(240,165,0,.3), 0 20px 40px rgba(240,165,0,.2);
+  }
+  .logo-title {
+    font-size: 1.8rem; font-weight: 800;
+    color: var(--text); letter-spacing: -.5px;
+  }
+  .logo-sub { font-size: .85rem; color: var(--muted); margin-top: 4px; font-weight: 300; }
+
+  /* ── CARD ── */
+  .card {
+    width: 100%; max-width: 340px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px; padding: 28px 24px;
+    box-shadow: 0 24px 60px rgba(0,0,0,.5);
+    animation: fadeUp .5s ease .1s both;
+  }
+  .card-title {
+    font-size: 1.05rem; font-weight: 700;
+    margin-bottom: 20px; color: var(--text);
+  }
+  .card-title span { color: var(--amber); }
+
+  /* ── FORM ── */
+  .form-group { margin-bottom: 16px; }
+  .form-label {
+    display: block; font-size: .78rem; color: var(--muted);
+    margin-bottom: 7px; font-weight: 500; letter-spacing: .3px;
+  }
+  .input-wrap { position: relative; }
+  .form-input {
+    width: 100%; padding: 13px 44px 13px 14px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 12px; color: var(--text);
+    font-family: 'Kanit', sans-serif; font-size: .92rem;
+    outline: none; transition: border .2s, box-shadow .2s;
+    -webkit-appearance: none;
+  }
+  .form-input:focus {
+    border-color: var(--amber);
+    box-shadow: 0 0 0 3px rgba(240,165,0,.12);
+  }
+  .input-icon {
+    position: absolute; right: 13px; top: 50%; transform: translateY(-50%);
+    color: var(--muted); font-size: .95rem; cursor: pointer;
+    user-select: none;
+  }
+  .input-icon:hover { color: var(--text); }
+
+  /* ── ERROR ── */
+  .error-box {
+    background: rgba(248,81,73,.1); border: 1px solid rgba(248,81,73,.3);
+    border-radius: 10px; padding: 11px 14px;
+    font-size: .82rem; color: #fca5a5;
+    margin-bottom: 16px; display: none;
+    animation: shake .3s ease;
+    line-height: 1.4;
+  }
+  .error-box.show { display: flex; gap: 8px; align-items: flex-start; }
+  @keyframes shake {
+    0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 60%{transform:translateX(6px)}
+  }
+
+  /* ── BUTTON ── */
+  .btn-login {
+    width: 100%; padding: 14px;
+    background: linear-gradient(135deg, #f0a500, #d97706);
+    border: none; border-radius: 12px; color: #0d1117;
+    font-family: 'Kanit', sans-serif; font-size: .95rem; font-weight: 700;
+    cursor: pointer; transition: transform .15s, box-shadow .15s, opacity .15s;
+    box-shadow: 0 4px 20px rgba(240,165,0,.35);
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    position: relative; overflow: hidden;
+  }
+  .btn-login::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(rgba(255,255,255,.15), transparent);
+    border-radius: inherit;
+  }
+  .btn-login:active { transform: scale(.97); opacity: .9; }
+  .btn-login:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+  .btn-login .spinner {
+    width: 18px; height: 18px; border-radius: 50%;
+    border: 2px solid rgba(0,0,0,.3);
+    border-top-color: #0d1117;
+    animation: spin .6s linear infinite; display: none;
+  }
+  .btn-login.loading .btn-text { display: none; }
+  .btn-login.loading .spinner { display: block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── FOOTER ── */
+  .login-footer {
+    margin-top: 20px; text-align: center;
+    font-size: .75rem; color: var(--muted);
+    line-height: 1.7; animation: fadeUp .5s ease .3s both;
+  }
+  .login-footer strong { color: var(--amber); }
+
+  /* ── DECORATIVE BADGES ── */
+  .badge-row {
+    display: flex; gap: 8px; justify-content: center;
+    margin-top: 20px; animation: fadeUp .5s ease .4s both;
+  }
+  .badge {
+    display: flex; align-items: center; gap: 5px;
+    padding: 5px 10px; border-radius: 99px;
+    font-size: .68rem; font-weight: 500;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--muted);
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeDown { from { opacity:0; transform:translateY(-20px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes fadeUp   { from { opacity:0; transform:translateY(20px);  } to { opacity:1; transform:translateY(0); } }
+
+  /* ── SUCCESS ── */
+  .success-overlay {
+    position: fixed; inset: 0; z-index: 100;
+    background: var(--bg);
+    display: none; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 16px;
+  }
+  .success-overlay.show { display: flex; animation: fadeIn .3s; }
+  @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+  .success-icon {
+    width: 80px; height: 80px; border-radius: 50%;
+    background: rgba(63,185,80,.15); border: 2px solid var(--green);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2rem; animation: popIn .4s cubic-bezier(.34,1.56,.64,1);
+  }
+  @keyframes popIn { from { transform:scale(0); } to { transform:scale(1); } }
+  .success-text { font-size: 1.1rem; font-weight: 700; color: var(--green); }
+  .success-sub  { font-size: .85rem; color: var(--muted); }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 430px) {
+    .shell { width: 100%; padding: 40px 20px; }
+    .grid-lines { background-size: 30px 30px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-layer"></div>
+<div class="grid-lines"></div>
+
+<div class="shell">
+
+  <!-- LOGO -->
+  <div class="logo-wrap">
+    <div class="logo-icon">🏗</div>
+    <div class="logo-title">BuildMaster Pro</div>
+    <div class="logo-sub">ระบบจัดการผู้รับเหมาครบวงจร</div>
+  </div>
+
+  <!-- LOGIN CARD -->
+  <div class="card">
+    <div class="card-title">เข้าสู่ระบบ <span>🔐</span></div>
+
+    <div class="error-box" id="error-box">
+      <span>⚠️</span>
+      <span id="error-msg">ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง</span>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">ชื่อผู้ใช้ (Username)</label>
+      <div class="input-wrap">
+        <input class="form-input" id="username" type="text"
+          placeholder="กรอก username" autocomplete="username"
+          autocapitalize="none" autocorrect="off" spellcheck="false">
+        <span class="input-icon">👤</span>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">รหัสผ่าน (Password)</label>
+      <div class="input-wrap">
+        <input class="form-input" id="password" type="password"
+          placeholder="กรอกรหัสผ่าน" autocomplete="current-password">
+        <span class="input-icon" id="pw-toggle" onclick="togglePassword()">👁</span>
+      </div>
+    </div>
+
+    <button class="btn-login" id="login-btn" onclick="doLogin()">
+      <div class="spinner"></div>
+      <span class="btn-text">เข้าสู่ระบบ</span>
+    </button>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="login-footer">
+    ไม่มีบัญชี? ติดต่อ <strong>Admin</strong> เพื่อขอสิทธิ์เข้าใช้งาน<br>
+    <span style="font-size:.68rem;opacity:.6">สร้างผู้ใช้โดย Admin: <code>python manage.py create-user</code></span>
+  </div>
+
+  <div class="badge-row">
+    <div class="badge">🔒 Encrypted</div>
+    <div class="badge">💾 SQLite</div>
+    <div class="badge">📱 Mobile Ready</div>
+  </div>
+
+</div>
+
+<!-- SUCCESS OVERLAY -->
+<div class="success-overlay" id="success-overlay">
+  <div class="success-icon">✓</div>
+  <div class="success-text">เข้าสู่ระบบสำเร็จ!</div>
+  <div class="success-sub" id="success-name">กำลังโหลดระบบ...</div>
+</div>
+
+<script>
+function togglePassword() {
+  const inp = document.getElementById("password");
+  const ico = document.getElementById("pw-toggle");
+  if (inp.type === "password") { inp.type = "text"; ico.textContent = "🙈"; }
+  else { inp.type = "password"; ico.textContent = "👁"; }
+}
+
+function showError(msg) {
+  const box = document.getElementById("error-box");
+  document.getElementById("error-msg").textContent = msg;
+  box.classList.add("show");
+  document.getElementById("password").value = "";
+  document.getElementById("password").focus();
+}
+
+async function doLogin() {
+  const username = document.getElementById("username").value.trim();
+  const password = document.getElementById("password").value;
+  const btn = document.getElementById("login-btn");
+  const errBox = document.getElementById("error-box");
+  errBox.classList.remove("show");
+
+  if (!username || !password) { showError("กรุณากรอกชื่อผู้ใช้และรหัสผ่าน"); return; }
+
+  btn.classList.add("loading"); btn.disabled = true;
+  try {
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await res.json();
+    if (!res.ok) { showError(data.error || "เกิดข้อผิดพลาด"); return; }
+
+    // Show success
+    document.getElementById("success-name").textContent =
+      "ยินดีต้อนรับ " + (data.display_name || username);
+    document.getElementById("success-overlay").classList.add("show");
+    setTimeout(() => { window.location.href = "/"; }, 1200);
+  } catch(e) {
+    showError("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้");
+  } finally {
+    btn.classList.remove("loading"); btn.disabled = false;
+  }
+}
+
+// Enter key
+document.addEventListener("keydown", e => {
+  if (e.key === "Enter") doLogin();
+});
+
+// Autofocus
+document.getElementById("username").focus();
+</script>
+</body>
+</html>

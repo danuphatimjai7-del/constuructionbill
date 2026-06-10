@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0d1117">
+<title>รายงานความคืบหน้า — BuildMaster Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0d1117;--surface:#161b22;--surface2:#1c2333;--surface3:#21262d;
+  --border:#30363d;--amber:#f0a500;--green:#3fb950;--blue:#58a6ff;
+  --red:#f85149;--purple:#bc8cff;--text:#e6edf3;--muted:#8b949e;--muted2:#6e7681;
+  --safe-b:env(safe-area-inset-bottom,0px);--safe-t:env(safe-area-inset-top,0px);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;font-family:'Kanit',sans-serif;background:var(--bg);color:var(--text);overflow:hidden}
+.app{width:100%;height:100vh;display:flex;flex-direction:column;overflow:hidden;max-width:430px;margin:0 auto}
+
+/* STATUS BAR */
+.status-bar{height:calc(44px + var(--safe-t));padding-top:var(--safe-t);background:var(--bg);display:flex;align-items:center;justify-content:space-between;padding-left:24px;padding-right:24px;flex-shrink:0}
+.status-time{font-size:.82rem;font-weight:700}
+.status-icons{display:flex;gap:6px;font-size:.72rem}
+
+/* HEADER */
+.header{padding:8px 20px 14px;background:var(--bg);flex-shrink:0;border-bottom:1px solid rgba(48,54,61,.6)}
+.header-row{display:flex;align-items:center;gap:12px}
+.back-btn{width:36px;height:36px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1rem;flex-shrink:0;color:var(--text);text-decoration:none}
+.header-title{font-size:1.1rem;font-weight:700;flex:1}
+.header-sub{font-size:.75rem;color:var(--muted);margin-top:2px}
+
+/* SCROLL */
+.scroll-area{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding-bottom:20px}
+.scroll-area::-webkit-scrollbar{display:none}
+
+/* TABS */
+.tab-bar{display:flex;border-bottom:1px solid var(--border);background:var(--bg);flex-shrink:0}
+.tab-item{flex:1;padding:12px 8px;text-align:center;font-size:.82rem;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s}
+.tab-item.active{color:var(--amber);border-bottom-color:var(--amber)}
+
+/* SECTION */
+.section-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 8px}
+.section-title{font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted)}
+.section-more{font-size:.82rem;color:var(--amber);font-weight:600;cursor:pointer}
+
+/* CARDS */
+.card{margin:0 20px 12px;background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;animation:cardIn .2s ease}
+@keyframes cardIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.card-header{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-body{padding:14px 16px}
+
+/* REPORT CARD */
+.report-card{margin:0 20px 12px;background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;cursor:pointer;transition:transform .15s;animation:cardIn .2s ease}
+.report-card:active{transform:scale(.98)}
+.report-stripe{height:3px}
+.report-body{padding:14px 16px}
+.report-title{font-size:.95rem;font-weight:700;margin-bottom:4px}
+.report-meta{font-size:.75rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.report-meta span{display:flex;align-items:center;gap:4px}
+.report-boq{background:var(--surface2);border-radius:8px;padding:8px 12px;font-size:.8rem;margin-bottom:10px;border-left:3px solid var(--amber)}
+.report-boq-label{color:var(--muted);font-size:.72rem;margin-bottom:2px}
+.report-footer{display:flex;align-items:center;justify-content:space-between}
+
+/* PHOTO GRID */
+.photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;border-radius:0 0 12px 12px;overflow:hidden}
+.photo-thumb{aspect-ratio:1;object-fit:cover;width:100%;cursor:pointer;transition:opacity .15s}
+.photo-thumb:active{opacity:.8}
+.photo-more{aspect-ratio:1;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;font-size:.9rem;font-weight:700;color:#fff;cursor:pointer;position:relative}
+
+/* UPLOAD ZONE */
+.upload-zone{border:2px dashed var(--border);border-radius:12px;padding:24px 16px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;position:relative}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--amber);background:rgba(240,165,0,.05)}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-icon{font-size:2rem;margin-bottom:8px}
+.upload-label{font-size:.88rem;font-weight:600;color:var(--text)}
+.upload-sub{font-size:.75rem;color:var(--muted);margin-top:4px}
+.upload-count{margin-top:8px;font-size:.8rem;font-weight:700}
+.upload-count.ok{color:var(--green)}
+.upload-count.warn{color:var(--red)}
+
+/* PREVIEW STRIP */
+.preview-strip{display:flex;gap:8px;overflow-x:auto;padding:4px 0}
+.preview-strip::-webkit-scrollbar{display:none}
+.preview-item{position:relative;flex-shrink:0;width:80px;height:80px;border-radius:10px;overflow:hidden}
+.preview-item img{width:100%;height:100%;object-fit:cover}
+.preview-remove{position:absolute;top:4px;right:4px;width:20px;height:20px;background:rgba(0,0,0,.7);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.65rem;color:#fff}
+
+/* BOQ LIST */
+.boq-item{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid rgba(48,54,61,.4);cursor:pointer;transition:background .12s}
+.boq-item:active{background:rgba(255,255,255,.03)}
+.boq-item.selected{background:rgba(240,165,0,.08);border-left:3px solid var(--amber)}
+.boq-num{width:32px;height:32px;border-radius:8px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:var(--muted);flex-shrink:0;font-family:'IBM Plex Mono',monospace}
+.boq-body{flex:1;min-width:0}
+.boq-name{font-size:.88rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.boq-cat{font-size:.72rem;color:var(--muted);margin-top:2px}
+.boq-right{text-align:right;flex-shrink:0}
+.boq-pct{font-size:.88rem;font-weight:700}
+.boq-prog{height:4px;background:var(--surface3);border-radius:99px;width:60px;margin-top:4px;overflow:hidden}
+.boq-fill{height:100%;border-radius:99px}
+
+/* CATEGORY BADGE */
+.cat-badge{display:inline-flex;align-items:center;padding:3px 8px;border-radius:6px;font-size:.68rem;font-weight:600}
+.cat-structure{background:rgba(88,166,255,.15);color:var(--blue)}
+.cat-arch{background:rgba(240,165,0,.15);color:var(--amber)}
+.cat-mep{background:rgba(188,140,255,.15);color:var(--purple)}
+.cat-finish{background:rgba(63,185,80,.15);color:var(--green)}
+.cat-road{background:rgba(248,81,73,.15);color:var(--red)}
+.cat-other{background:rgba(139,148,158,.12);color:var(--muted)}
+
+/* PILLS */
+.pill{display:inline-flex;align-items:center;padding:3px 10px;border-radius:99px;font-size:.7rem;font-weight:600}
+.pill-amber{background:rgba(240,165,0,.15);color:var(--amber)}
+.pill-green{background:rgba(63,185,80,.15);color:var(--green)}
+.pill-blue{background:rgba(88,166,255,.15);color:var(--blue)}
+.pill-red{background:rgba(248,81,73,.15);color:var(--red)}
+.pill-gray{background:rgba(139,148,158,.12);color:var(--muted)}
+
+/* FORM */
+.form-group{margin-bottom:14px}
+.form-label{display:block;font-size:.78rem;color:var(--muted);margin-bottom:6px;font-weight:500}
+.form-input{width:100%;padding:12px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Kanit',sans-serif;font-size:.9rem;outline:none;transition:border .15s;-webkit-appearance:none}
+.form-input:focus{border-color:var(--amber)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.progress-slider{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:99px;background:var(--surface3);outline:none;cursor:pointer}
+.progress-slider::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--amber);cursor:pointer;box-shadow:0 2px 8px rgba(240,165,0,.4)}
+
+/* BUTTONS */
+.btn{padding:13px;border-radius:12px;border:none;cursor:pointer;font-family:'Kanit',sans-serif;font-size:.92rem;font-weight:600;transition:transform .12s,opacity .12s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn:active{transform:scale(.97);opacity:.9}
+.btn-primary{background:var(--amber);color:#0d1117;width:100%}
+.btn-ghost{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+.btn-sm{padding:7px 14px;font-size:.8rem;border-radius:8px}
+.btn-approve{background:rgba(63,185,80,.15);color:var(--green);border:1px solid rgba(63,185,80,.3)}
+.btn-reject{background:rgba(248,81,73,.15);color:var(--red);border:1px solid rgba(248,81,73,.3)}
+
+/* BOTTOM SHEET */
+.sheet-overlay{position:absolute;inset:0;background:rgba(0,0,0,.72);display:none;align-items:flex-end;z-index:200;backdrop-filter:blur(5px)}
+.sheet-overlay.open{display:flex;animation:overlayIn .2s}
+@keyframes overlayIn{from{opacity:0}to{opacity:1}}
+.sheet{width:100%;background:var(--surface);border-radius:24px 24px 0 0;padding:0 0 calc(24px + var(--safe-b));animation:sheetIn .25s cubic-bezier(.32,1,.23,1);max-height:92vh;overflow-y:auto;display:flex;flex-direction:column}
+.sheet::-webkit-scrollbar{display:none}
+@keyframes sheetIn{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.sheet-handle{width:36px;height:4px;background:var(--border);border-radius:99px;margin:12px auto 16px;flex-shrink:0}
+.sheet-title{font-size:1.05rem;font-weight:700;padding:0 20px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
+.sheet-scroll{flex:1;overflow-y:auto;padding:16px 20px}
+.sheet-scroll::-webkit-scrollbar{display:none}
+.sheet-footer{padding:16px 20px 0;flex-shrink:0;border-top:1px solid var(--border);display:flex;gap:10px}
+
+/* LIGHTBOX */
+.lightbox{position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:500;display:none;flex-direction:column;align-items:center;justify-content:center}
+.lightbox.open{display:flex;animation:overlayIn .2s}
+.lightbox img{max-width:100%;max-height:80vh;object-fit:contain;border-radius:8px}
+.lightbox-close{position:absolute;top:20px;right:20px;width:40px;height:40px;background:rgba(255,255,255,.1);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1.2rem;color:#fff}
+.lightbox-caption{margin-top:12px;font-size:.85rem;color:var(--muted);text-align:center;padding:0 20px}
+.lightbox-nav{display:flex;gap:16px;margin-top:16px}
+.lightbox-nav button{background:rgba(255,255,255,.1);border:none;color:#fff;border-radius:10px;padding:8px 20px;cursor:pointer;font-family:'Kanit',sans-serif;font-size:.88rem}
+
+/* LOADING */
+.loading-shimmer{margin:12px 20px;height:100px;border-radius:12px;background:linear-gradient(90deg,var(--surface) 25%,var(--surface2) 50%,var(--surface) 75%);background-size:400% 100%;animation:shimmer 1.4s infinite}
+@keyframes shimmer{0%{background-position:100% 50%}100%{background-position:-100% 50%}}
+
+/* EMPTY */
+.empty-state{text-align:center;padding:48px 20px;color:var(--muted)}
+.empty-icon{font-size:3rem;margin-bottom:12px;opacity:.4;display:block}
+
+/* TOAST */
+.toast{position:absolute;bottom:calc(24px + var(--safe-b));left:20px;right:20px;background:#21262d;border:1px solid var(--border);border-radius:14px;padding:13px 16px;font-size:.88rem;z-index:9999;transform:translateY(20px);opacity:0;transition:all .3s;pointer-events:none;box-shadow:0 8px 32px rgba(0,0,0,.5)}
+.toast.show{transform:translateY(0);opacity:1}
+
+/* UPLOAD PROGRESS */
+.upload-progress{height:4px;background:var(--surface3);border-radius:99px;overflow:hidden;margin-top:8px;display:none}
+.upload-progress-bar{height:100%;border-radius:99px;background:var(--amber);transition:width .3s}
+.upload-progress.show{display:block}
+
+/* WEATHER PILLS */
+.weather-group{display:flex;gap:8px;flex-wrap:wrap}
+.weather-chip{padding:7px 14px;border-radius:99px;border:1px solid var(--border);background:var(--surface2);font-size:.8rem;cursor:pointer;transition:all .15s;white-space:nowrap}
+.weather-chip.selected{background:rgba(88,166,255,.15);border-color:rgba(88,166,255,.4);color:var(--blue)}
+
+/* REVIEW SECTION */
+.review-box{background:var(--surface2);border-radius:12px;padding:14px;margin-top:12px;border:1px solid var(--border)}
+.review-label{font-size:.75rem;color:var(--muted);margin-bottom:6px}
+
+/* STATS ROW */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 20px 16px}
+.stat-mini{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center}
+.stat-mini-val{font-size:1.3rem;font-weight:800;font-family:'IBM Plex Mono',monospace}
+.stat-mini-lbl{font-size:.68rem;color:var(--muted);margin-top:3px}
+
+/* ALERT */
+.alert-banner{margin:8px 20px;padding:12px 14px;border-radius:12px;font-size:.82rem;display:flex;align-items:flex-start;gap:10px}
+.alert-info{background:rgba(88,166,255,.1);border:1px solid rgba(88,166,255,.25);color:#93c5fd}
+.alert-warn{background:rgba(240,165,0,.1);border:1px solid rgba(240,165,0,.25);color:#fcd34d}
+
+@media(max-width:430px){.app{max-width:100%}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+  <div class="status-bar">
+    <span class="status-time" id="clock">9:41</span>
+    <div class="status-icons"><span>📶</span><span>🔋</span></div>
+  </div>
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-row">
+      <a class="back-btn" href="/" title="กลับ">←</a>
+      <div style="flex:1;min-width:0">
+        <div class="header-title" id="proj-name">กำลังโหลด...</div>
+        <div class="header-sub" id="proj-status"></div>
+      </div>
+      <button class="btn btn-sm btn-ghost" onclick="openAddReport()" id="add-report-btn" style="display:none">+ รายงาน</button>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tab-bar">
+    <div class="tab-item active" id="tab-reports" onclick="switchTab('reports')">📋 รายงาน</div>
+    <div class="tab-item" id="tab-boq"     onclick="switchTab('boq')">📑 BOQ</div>
+    <div class="tab-item" id="tab-overview" onclick="switchTab('overview')">📊 ภาพรวม</div>
+  </div>
+
+  <!-- ═══ TAB: REPORTS ═══ -->
+  <div id="pg-reports" class="scroll-area">
+    <div id="report-list"><div class="loading-shimmer"></div></div>
+  </div>
+
+  <!-- ═══ TAB: BOQ ═══ -->
+  <div id="pg-boq" class="scroll-area" style="display:none">
+    <div class="alert-banner alert-info" id="boq-hint" style="display:none">
+      💡 เลือกรายการ BOQ เพื่อดูรายงานความคืบหน้าของงานนั้น
+    </div>
+    <div id="boq-list"><div class="loading-shimmer"></div></div>
+  </div>
+
+  <!-- ═══ TAB: OVERVIEW ═══ -->
+  <div id="pg-overview" class="scroll-area" style="display:none">
+    <div class="stats-row">
+      <div class="stat-mini">
+        <div class="stat-mini-val amber" id="ov-total-reports">—</div>
+        <div class="stat-mini-lbl">รายงานทั้งหมด</div>
+      </div>
+      <div class="stat-mini">
+        <div class="stat-mini-val green" id="ov-approved">—</div>
+        <div class="stat-mini-lbl">อนุมัติแล้ว</div>
+      </div>
+      <div class="stat-mini">
+        <div class="stat-mini-val amber" id="ov-pending">—</div>
+        <div class="stat-mini-lbl">รอตรวจสอบ</div>
+      </div>
+    </div>
+    <div class="section-header"><span class="section-title">ความคืบหน้า BOQ รายหมวด</span></div>
+    <div id="ov-boq-list"></div>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+</div>
+
+<!-- ═══════ SHEET: ADD REPORT ═══════ -->
+<div class="sheet-overlay" id="addReportSheet" onclick="closeSheet('addReportSheet',event)">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">📋 รายงานความคืบหน้าหน้างาน</div>
+    <div class="sheet-scroll">
+
+      <!-- PHOTO UPLOAD -->
+      <div class="form-group">
+        <label class="form-label">📷 รูปภาพหน้างาน <span style="color:var(--red)">*</span> <span style="color:var(--muted)">(อย่างน้อย 3 ภาพ)</span></label>
+        <div class="upload-zone" id="upload-zone" onclick="document.getElementById('photo-input').click()">
+          <input type="file" id="photo-input" accept="image/*" multiple style="display:none" onchange="handlePhotoSelect(event)">
+          <div class="upload-icon">📷</div>
+          <div class="upload-label">แตะเพื่อเลือกรูปภาพ</div>
+          <div class="upload-sub">JPG / PNG / WEBP • ไม่เกิน 8MB ต่อภาพ</div>
+          <div class="upload-count warn" id="upload-count">⚠ ยังไม่ได้เลือกรูปภาพ</div>
+        </div>
+        <div class="preview-strip" id="preview-strip" style="margin-top:10px"></div>
+      </div>
+
+      <!-- BOQ SELECTION -->
+      <div class="form-group">
+        <label class="form-label">📑 หมวดงาน BOQ <span style="color:var(--muted)">(เลือกงานที่กำลังรายงาน)</span></label>
+        <select class="form-input" id="r-boq" onchange="updateBoqProgress()">
+          <option value="">— ไม่ระบุ —</option>
+        </select>
+        <div id="boq-progress-hint" style="margin-top:8px;display:none">
+          <div style="display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:6px">
+            <span style="color:var(--muted)">ความคืบหน้าปัจจุบัน</span>
+            <span id="boq-current-pct" style="color:var(--amber);font-weight:700">0%</span>
+          </div>
+          <div style="height:5px;background:var(--surface3);border-radius:99px;overflow:hidden">
+            <div id="boq-current-bar" style="height:100%;border-radius:99px;background:var(--amber);transition:width .5s"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TITLE -->
+      <div class="form-group">
+        <label class="form-label">หัวข้อรายงาน <span style="color:var(--red)">*</span></label>
+        <input class="form-input" id="r-title" placeholder="เช่น งานเทคอนกรีตชั้น 5 เสร็จแล้ว">
+      </div>
+
+      <!-- PROGRESS -->
+      <div class="form-group">
+        <label class="form-label" style="display:flex;justify-content:space-between">
+          <span>ความคืบหน้างานส่วนนี้ (%)</span>
+          <span id="r-pct-display" style="color:var(--amber);font-weight:700">0%</span>
+        </label>
+        <input type="range" class="progress-slider" id="r-progress" min="0" max="100" value="0"
+          oninput="document.getElementById('r-pct-display').textContent=this.value+'%'">
+      </div>
+
+      <!-- DATE + WORKERS -->
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">วันที่รายงาน</label>
+          <input class="form-input" id="r-date" type="date">
+        </div>
+        <div class="form-group">
+          <label class="form-label">จำนวนแรงงานวันนี้</label>
+          <input class="form-input" id="r-workers" type="number" placeholder="0" min="0">
+        </div>
+      </div>
+
+      <!-- WEATHER -->
+      <div class="form-group">
+        <label class="form-label">สภาพอากาศ</label>
+        <div class="weather-group" id="weather-group">
+          <div class="weather-chip selected" onclick="selectWeather(this,'แจ่มใส')">☀️ แจ่มใส</div>
+          <div class="weather-chip" onclick="selectWeather(this,'มีเมฆ')">⛅ มีเมฆ</div>
+          <div class="weather-chip" onclick="selectWeather(this,'ฝนตกเล็กน้อย')">🌦 ฝนเล็กน้อย</div>
+          <div class="weather-chip" onclick="selectWeather(this,'ฝนตกหนัก')">🌧 ฝนหนัก</div>
+          <div class="weather-chip" onclick="selectWeather(this,'ร้อนมาก')">🌡 ร้อนมาก</div>
+        </div>
+      </div>
+
+      <!-- DESCRIPTION -->
+      <div class="form-group">
+        <label class="form-label">รายละเอียดงานที่ทำ</label>
+        <textarea class="form-input" id="r-desc" rows="3" style="resize:vertical" placeholder="อธิบายงานที่ดำเนินการ ปัญหาที่พบ และวิธีแก้ไข..."></textarea>
+      </div>
+
+      <!-- UPLOAD PROGRESS BAR -->
+      <div class="upload-progress" id="upload-progress">
+        <div class="upload-progress-bar" id="upload-progress-bar" style="width:0%"></div>
+      </div>
+      <div id="upload-status" style="font-size:.78rem;color:var(--muted);text-align:center;margin-top:4px;display:none"></div>
+    </div>
+    <div class="sheet-footer">
+      <button class="btn btn-ghost" style="flex:0;padding:13px 20px" onclick="closeSheet('addReportSheet')">ยกเลิก</button>
+      <button class="btn btn-primary" id="submit-report-btn" onclick="submitReport()">📤 ส่งรายงาน</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ SHEET: REPORT DETAIL ═══════ -->
+<div class="sheet-overlay" id="reportDetailSheet" onclick="closeSheet('reportDetailSheet',event)">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title" id="detail-title">รายละเอียดรายงาน</div>
+    <div class="sheet-scroll" id="detail-body">
+      <div class="loading-shimmer"></div>
+    </div>
+    <div class="sheet-footer" id="detail-footer" style="display:none">
+      <button class="btn btn-approve btn-sm" onclick="reviewReport('อนุมัติ')">✅ อนุมัติ</button>
+      <button class="btn btn-reject btn-sm" onclick="reviewReport('ไม่อนุมัติ')">❌ ไม่อนุมัติ</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ SHEET: BOQ DETAIL ═══════ -->
+<div class="sheet-overlay" id="boqDetailSheet" onclick="closeSheet('boqDetailSheet',event)">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title" id="boq-detail-title">รายงานของงานนี้</div>
+    <div class="sheet-scroll" id="boq-detail-body"></div>
+  </div>
+</div>
+
+<!-- ═══════ LIGHTBOX ═══════ -->
+<div class="lightbox" id="lightbox">
+  <div class="lightbox-close" onclick="closeLightbox()">✕</div>
+  <img id="lightbox-img" src="" alt="">
+  <div class="lightbox-caption" id="lightbox-caption"></div>
+  <div class="lightbox-nav">
+    <button onclick="lightboxPrev()">← ก่อนหน้า</button>
+    <span id="lightbox-counter" style="display:flex;align-items:center;font-size:.82rem;color:var(--muted)"></span>
+    <button onclick="lightboxNext()">ถัดไป →</button>
+  </div>
+</div>
+
+<script>
+// ═══ STATE ═══
+const urlParams   = new URLSearchParams(location.search);
+const PROJECT_ID  = parseInt(urlParams.get("pid") || "1");
+let currentTab    = "reports";
+let allReports    = [];
+let allBoq        = [];
+let selectedWeather = "แจ่มใส";
+let selectedPhotos  = [];
+let currentReportId = null;
+let userRole        = "viewer";
+let lightboxPhotos  = [];
+let lightboxIndex   = 0;
+
+// ═══ INIT ═══
+document.addEventListener("DOMContentLoaded", async () => {
+  updateClock(); setInterval(updateClock, 15000);
+  document.getElementById("r-date").value = new Date().toISOString().split("T")[0];
+  await loadUser();
+  await loadProjectInfo();
+  await Promise.all([loadReports(), loadBoq()]);
+});
+
+async function loadUser() {
+  try {
+    const r = await fetch("/api/auth/me");
+    if (!r.ok) { location.href = "/login"; return; }
+    const u = await r.json();
+    userRole = u.role;
+  } catch(e) { location.href = "/login"; }
+}
+
+async function loadProjectInfo() {
+  try {
+    const r = await fetch(`/api/projects/${PROJECT_ID}`);
+    const p = await r.json();
+    document.getElementById("proj-name").textContent = p.name;
+    document.title = p.name + " — รายงาน";
+    const isConfirmed = ["กำลังก่อสร้าง","ตามแผน","ล่าช้า","เกือบเสร็จ"].includes(p.status);
+    const statusEl = document.getElementById("proj-status");
+    statusEl.textContent = p.status + (isConfirmed ? " • สามารถส่งรายงานได้" : " • ยังไม่ยืนยันสัญญา");
+    if (isConfirmed) {
+      document.getElementById("add-report-btn").style.display = "flex";
+      document.getElementById("boq-hint").style.display = "flex";
+    }
+  } catch(e) {}
+}
+
+// ═══ LOAD DATA ═══
+async function loadReports() {
+  document.getElementById("report-list").innerHTML = `<div class="loading-shimmer"></div>`;
+  try {
+    const r = await fetch(`/api/reports/${PROJECT_ID}`);
+    allReports = await r.json();
+    renderReports();
+    updateOverview();
+  } catch(e) {
+    document.getElementById("report-list").innerHTML = emptyState("❌","โหลดรายงานไม่สำเร็จ");
+  }
+}
+
+async function loadBoq() {
+  document.getElementById("boq-list").innerHTML = `<div class="loading-shimmer"></div>`;
+  try {
+    const r = await fetch(`/api/boq/${PROJECT_ID}`);
+    allBoq = await r.json();
+    renderBoq();
+    populateBoqSelect();
+  } catch(e) {}
+}
+
+// ═══ RENDER REPORTS ═══
+function renderReports() {
+  const el = document.getElementById("report-list");
+  if (!allReports.length) {
+    el.innerHTML = emptyState("📋","ยังไม่มีรายงาน\nกด '+ รายงาน' เพื่อเพิ่มรายงานแรก");
+    return;
+  }
+  el.innerHTML = `<div style="height:8px"></div>` + allReports.map(r => {
+    const statusColor = {
+      "อนุมัติ":"var(--green)","รอตรวจสอบ":"var(--amber)","ไม่อนุมัติ":"var(--red)"
+    }[r.status] || "var(--muted)";
+    const pillClass = {
+      "อนุมัติ":"pill-green","รอตรวจสอบ":"pill-amber","ไม่อนุมัติ":"pill-red"
+    }[r.status] || "pill-gray";
+    const boqTag = r.boq_description
+      ? `<div class="report-boq"><div class="report-boq-label">หมวดงาน BOQ</div>
+          ${r.boq_item_no ? `<b>${r.boq_item_no}.</b> ` : ""}${r.boq_description}
+          ${r.boq_category ? `<span class="${catClass(r.boq_category)}" style="margin-left:6px">${r.boq_category}</span>` : ""}
+        </div>` : "";
+    const photosHtml = r.photo_count > 0
+      ? `<div style="background:var(--surface2);border-radius:8px;padding:6px 10px;font-size:.75rem;color:var(--muted);display:inline-flex;align-items:center;gap:6px"><span>📷</span>${r.photo_count} รูปภาพ</div>` : "";
+    return `
+      <div class="report-card" onclick="openReportDetail(${r.id})">
+        <div class="report-stripe" style="background:${statusColor}"></div>
+        <div class="report-body">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px">
+            <div class="report-title" style="flex:1">${r.title}</div>
+            <span class="pill ${pillClass}" style="flex-shrink:0">${r.status}</span>
+          </div>
+          <div class="report-meta">
+            <span>📅 ${r.report_date}</span>
+            <span>👷 ${r.workers_count} คน</span>
+            <span>${weatherIcon(r.weather)} ${r.weather}</span>
+            ${r.reporter_name ? `<span>👤 ${r.reporter_name}</span>` : ""}
+          </div>
+          ${boqTag}
+          <div class="report-footer">
+            <div style="display:flex;align-items:center;gap:10px">
+              ${photosHtml}
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:.8rem;font-weight:700;color:${statusColor}">${r.progress_pct}%</div>
+              <div style="height:4px;background:var(--surface3);border-radius:99px;width:80px;overflow:hidden;margin-top:3px">
+                <div style="height:100%;width:${r.progress_pct}%;background:${statusColor};border-radius:99px"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }).join("") + `<div style="height:20px"></div>`;
+}
+
+// ═══ RENDER BOQ ═══
+function catClass(cat) {
+  if (cat.includes("โครงสร้าง")) return "cat-badge cat-structure";
+  if (cat.includes("สถาปัตย์")) return "cat-badge cat-arch";
+  if (cat.includes("MEP") || cat.includes("ระบบ")) return "cat-badge cat-mep";
+  if (cat.includes("ตกแต่ง")) return "cat-badge cat-finish";
+  if (cat.includes("ถนน")) return "cat-badge cat-road";
+  return "cat-badge cat-other";
+}
+
+function boqPctColor(pct) {
+  if (pct >= 80) return "var(--green)";
+  if (pct >= 40) return "var(--amber)";
+  return "var(--blue)";
+}
+
+function renderBoq() {
+  const el = document.getElementById("boq-list");
+  if (!allBoq.length) {
+    el.innerHTML = emptyState("📑","ยังไม่มีรายการ BOQ");
+    return;
+  }
+  // Group by category
+  const cats = [...new Set(allBoq.map(b => b.category))];
+  el.innerHTML = cats.map(cat => {
+    const items = allBoq.filter(b => b.category === cat);
+    const catAvg = Math.round(items.reduce((s,b) => s+b.progress_pct,0)/items.length);
+    return `
+      <div style="margin-bottom:4px">
+        <div style="padding:10px 20px;display:flex;align-items:center;justify-content:space-between">
+          <span class="${catClass(cat)}">${cat}</span>
+          <span style="font-size:.75rem;color:var(--muted)">เฉลี่ย ${catAvg}%</span>
+        </div>
+        ${items.map(b => {
+          const col = boqPctColor(b.progress_pct);
+          return `
+            <div class="boq-item" onclick="openBoqDetail(${b.id})">
+              <div class="boq-num">${b.item_no||"—"}</div>
+              <div class="boq-body">
+                <div class="boq-name">${b.description}</div>
+                <div class="boq-cat">${b.quantity.toLocaleString()} ${b.unit} • ฿${(b.total_price||0).toLocaleString()}</div>
+              </div>
+              <div class="boq-right">
+                <div class="boq-pct" style="color:${col}">${b.progress_pct}%</div>
+                <div class="boq-prog"><div class="boq-fill" style="width:${b.progress_pct}%;background:${col}"></div></div>
+              </div>
+            </div>`;
+        }).join("")}
+      </div>`;
+  }).join("") + `<div style="height:20px"></div>`;
+}
+
+// ═══ OVERVIEW ═══
+function updateOverview() {
+  const total    = allReports.length;
+  const approved = allReports.filter(r=>r.status==="อนุมัติ").length;
+  const pending  = allReports.filter(r=>r.status==="รอตรวจสอบ").length;
+  document.getElementById("ov-total-reports").textContent = total;
+  document.getElementById("ov-approved").textContent      = approved;
+  document.getElementById("ov-pending").textContent        = pending;
+  renderOvBoq();
+}
+
+function renderOvBoq() {
+  if (!allBoq.length) return;
+  const cats = [...new Set(allBoq.map(b=>b.category))];
+  document.getElementById("ov-boq-list").innerHTML =
+    cats.map(cat => {
+      const items = allBoq.filter(b=>b.category===cat);
+      const avg   = Math.round(items.reduce((s,b)=>s+b.progress_pct,0)/items.length);
+      const col   = boqPctColor(avg);
+      return `
+        <div class="card" style="margin-bottom:10px">
+          <div class="card-body" style="padding:12px 16px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+              <span class="${catClass(cat)}">${cat}</span>
+              <span style="font-size:1rem;font-weight:800;color:${col};font-family:'IBM Plex Mono',monospace">${avg}%</span>
+            </div>
+            <div style="height:6px;background:var(--surface3);border-radius:99px;overflow:hidden;margin-bottom:10px">
+              <div style="height:100%;width:${avg}%;background:${col};border-radius:99px;transition:width .8s"></div>
+            </div>
+            ${items.map(b=>`
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-top:1px solid rgba(48,54,61,.4)">
+                <span style="font-size:.8rem;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${b.item_no?b.item_no+". ":""}${b.description}</span>
+                <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+                  <div style="width:50px;height:4px;background:var(--surface3);border-radius:99px;overflow:hidden">
+                    <div style="height:100%;width:${b.progress_pct}%;background:${boqPctColor(b.progress_pct)};border-radius:99px"></div>
+                  </div>
+                  <span style="font-size:.78rem;font-weight:700;color:${boqPctColor(b.progress_pct)};width:32px;text-align:right">${b.progress_pct}%</span>
+                </div>
+              </div>`).join("")}
+          </div>
+        </div>`;
+    }).join("") + `<div style="height:20px"></div>`;
+}
+
+// ═══ POPULATE BOQ SELECT ═══
+function populateBoqSelect() {
+  const sel = document.getElementById("r-boq");
+  const cats = [...new Set(allBoq.map(b=>b.category))];
+  sel.innerHTML = `<option value="">— ไม่ระบุ BOQ —</option>` +
+    cats.map(cat => {
+      const items = allBoq.filter(b=>b.category===cat);
+      return `<optgroup label="${cat}">${items.map(b=>
+        `<option value="${b.id}" data-pct="${b.progress_pct}">${b.item_no?b.item_no+". ":""}${b.description} (${b.progress_pct}%)`
+      ).join("")}</optgroup>`;
+    }).join("");
+}
+
+function updateBoqProgress() {
+  const sel = document.getElementById("r-boq");
+  const opt = sel.selectedOptions[0];
+  const pct = opt ? parseInt(opt.getAttribute("data-pct")||"0") : 0;
+  const hint = document.getElementById("boq-progress-hint");
+  if (sel.value) {
+    hint.style.display = "block";
+    document.getElementById("boq-current-pct").textContent = pct + "%";
+    document.getElementById("boq-current-bar").style.width = pct + "%";
+    document.getElementById("r-progress").value = pct;
+    document.getElementById("r-pct-display").textContent = pct + "%";
+  } else {
+    hint.style.display = "none";
+  }
+}
+
+// ═══ PHOTO HANDLING ═══
+function handlePhotoSelect(e) {
+  const files = Array.from(e.target.files);
+  const maxMB = 8;
+  const valid = files.filter(f => {
+    if (f.size > maxMB*1024*1024) { showToast(`⚠️ ${f.name} ใหญ่เกิน ${maxMB}MB`); return false; }
+    return true;
+  });
+  selectedPhotos = [...selectedPhotos, ...valid].slice(0, 10); // max 10
+  renderPreviews();
+  updateUploadCount();
+}
+
+function renderPreviews() {
+  const strip = document.getElementById("preview-strip");
+  strip.innerHTML = selectedPhotos.map((f,i) => {
+    const url = URL.createObjectURL(f);
+    return `<div class="preview-item">
+      <img src="${url}" alt="">
+      <div class="preview-remove" onclick="removePhoto(${i})">✕</div>
+    </div>`;
+  }).join("");
+}
+
+function removePhoto(idx) {
+  selectedPhotos.splice(idx,1);
+  renderPreviews();
+  updateUploadCount();
+}
+
+function updateUploadCount() {
+  const el = document.getElementById("upload-count");
+  const n = selectedPhotos.length;
+  if (n === 0) { el.textContent = "⚠ ยังไม่ได้เลือกรูปภาพ"; el.className="upload-count warn"; }
+  else if (n < 3) { el.textContent = `⚠ เลือก ${n} ภาพ (ต้องการอย่างน้อย 3 ภาพ)`; el.className="upload-count warn"; }
+  else { el.textContent = `✅ เลือกแล้ว ${n} ภาพ`; el.className="upload-count ok"; }
+}
+
+function weatherIcon(w) {
+  const m = {"แจ่มใส":"☀️","มีเมฆ":"⛅","ฝนตกเล็กน้อย":"🌦","ฝนตกหนัก":"🌧","ร้อนมาก":"🌡"};
+  return m[w]||"🌤";
+}
+
+function selectWeather(el, val) {
+  document.querySelectorAll(".weather-chip").forEach(c=>c.classList.remove("selected"));
+  el.classList.add("selected");
+  selectedWeather = val;
+}
+
+// ═══ SUBMIT REPORT ═══
+async function submitReport() {
+  const title = document.getElementById("r-title").value.trim();
+  if (!title) { showToast("⚠️ กรุณากรอกหัวข้อรายงาน"); return; }
+  if (selectedPhotos.length < 3) { showToast("⚠️ กรุณาอัปโหลดรูปภาพอย่างน้อย 3 ภาพ"); return; }
+
+  const btn = document.getElementById("submit-report-btn");
+  btn.disabled = true; btn.textContent = "⏳ กำลังส่ง...";
+  const prog = document.getElementById("upload-progress");
+  const bar  = document.getElementById("upload-progress-bar");
+  const status = document.getElementById("upload-status");
+  prog.classList.add("show"); status.style.display = "block";
+
+  const fd = new FormData();
+  fd.append("title",         title);
+  fd.append("description",   document.getElementById("r-desc").value);
+  fd.append("boq_item_id",   document.getElementById("r-boq").value);
+  fd.append("progress_pct",  document.getElementById("r-progress").value);
+  fd.append("weather",       selectedWeather);
+  fd.append("workers_count", document.getElementById("r-workers").value||0);
+  fd.append("report_date",   document.getElementById("r-date").value);
+  selectedPhotos.forEach((f,i) => fd.append("photos", f));
+
+  // Simulate upload progress
+  let fakeP = 0;
+  const fakeInterval = setInterval(() => {
+    fakeP = Math.min(fakeP+8, 85);
+    bar.style.width = fakeP+"%";
+    status.textContent = `กำลังอัปโหลด... ${fakeP}%`;
+  }, 200);
+
+  try {
+    const r = await fetch(`/api/reports/${PROJECT_ID}`, { method:"POST", body:fd });
+    clearInterval(fakeInterval);
+    const data = await r.json();
+    if (!r.ok) { showToast("❌ "+data.error); return; }
+    bar.style.width = "100%"; status.textContent = "✅ ส่งรายงานสำเร็จ!";
+    setTimeout(async () => {
+      closeSheet("addReportSheet");
+      resetReportForm();
+      await Promise.all([loadReports(), loadBoq()]);
+      showToast("✅ บันทึกรายงานสำเร็จ");
+    }, 600);
+  } catch(e) {
+    clearInterval(fakeInterval);
+    showToast("❌ เกิดข้อผิดพลาด: "+e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = "📤 ส่งรายงาน";
+    prog.classList.remove("show"); status.style.display = "none";
+  }
+}
+
+function resetReportForm() {
+  selectedPhotos = [];
+  document.getElementById("preview-strip").innerHTML = "";
+  document.getElementById("upload-count").textContent = "⚠ ยังไม่ได้เลือกรูปภาพ";
+  document.getElementById("upload-count").className = "upload-count warn";
+  ["r-title","r-desc","r-workers"].forEach(id => document.getElementById(id).value="");
+  document.getElementById("r-progress").value = 0;
+  document.getElementById("r-pct-display").textContent = "0%";
+  document.getElementById("r-boq").value = "";
+  document.getElementById("boq-progress-hint").style.display = "none";
+  document.getElementById("r-date").value = new Date().toISOString().split("T")[0];
+  selectedWeather = "แจ่มใส";
+  document.querySelectorAll(".weather-chip").forEach((c,i)=>c.classList.toggle("selected",i===0));
+}
+
+// ═══ REPORT DETAIL ═══
+async function openReportDetail(id) {
+  currentReportId = id;
+  document.getElementById("detail-body").innerHTML = `<div class="loading-shimmer"></div>`;
+  openSheet("reportDetailSheet");
+  try {
+    const r = await fetch(`/api/reports/detail/${id}`);
+    const d = await r.json();
+    document.getElementById("detail-title").textContent = d.title;
+    const statusColor = {"อนุมัติ":"var(--green)","รอตรวจสอบ":"var(--amber)","ไม่อนุมัติ":"var(--red)"}[d.status]||"var(--muted)";
+    const pillClass   = {"อนุมัติ":"pill-green","รอตรวจสอบ":"pill-amber","ไม่อนุมัติ":"pill-red"}[d.status]||"pill-gray";
+    const photos = d.photos||[];
+    lightboxPhotos = photos;
+
+    // Photo grid (3-col)
+    let photoGrid = "";
+    if (photos.length) {
+      const show = photos.slice(0,6);
+      const more = photos.length - 6;
+      photoGrid = `<div class="photo-grid" style="border-radius:12px;overflow:hidden;margin-bottom:16px">
+        ${show.map((p,i)=>`
+          <div style="position:relative;aspect-ratio:1;overflow:hidden;background:var(--surface3)">
+            <img class="photo-thumb" src="/uploads/${p.filename}" alt="${p.caption||""}" onclick="openLightbox(${i})" loading="lazy">
+            ${i===5&&more>0?`<div class="photo-more" onclick="openLightbox(5)">+${more}</div>`:""}
+          </div>`).join("")}
+      </div>`;
+    }
+
+    const boqSection = d.boq_description ? `
+      <div style="background:var(--surface2);border-radius:10px;padding:12px;margin-bottom:12px;border-left:3px solid var(--amber)">
+        <div style="font-size:.72rem;color:var(--muted);margin-bottom:4px">หมวดงาน BOQ</div>
+        <div style="font-size:.88rem;font-weight:600">${d.boq_item_no?d.boq_item_no+". ":""}${d.boq_description}</div>
+        ${d.boq_category?`<span class="${catClass(d.boq_category)}" style="margin-top:4px;display:inline-block">${d.boq_category}</span>`:""}
+      </div>` : "";
+
+    const reviewSection = d.status !== "รอตรวจสอบ" ? `
+      <div class="review-box">
+        <div class="review-label">บันทึกผู้ตรวจสอบ ${d.reviewer_name?"("+d.reviewer_name+")":""}</div>
+        <div style="font-size:.88rem">${d.reviewer_note||"ไม่มีหมายเหตุ"}</div>
+        ${d.reviewed_at?`<div style="font-size:.72rem;color:var(--muted);margin-top:4px">ตรวจเมื่อ: ${d.reviewed_at}</div>`:""}
+      </div>` : "";
+
+    document.getElementById("detail-body").innerHTML = `
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+        <span class="pill ${pillClass}">${d.status}</span>
+        <span style="font-size:.8rem;color:var(--muted);display:flex;align-items:center">📅 ${d.report_date}</span>
+        <span style="font-size:.8rem;color:var(--muted);display:flex;align-items:center">${weatherIcon(d.weather)} ${d.weather}</span>
+        <span style="font-size:.8rem;color:var(--muted);display:flex;align-items:center">👷 ${d.workers_count} คน</span>
+      </div>
+      ${boqSection}
+      <div style="margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:.82rem">
+          <span>ความคืบหน้างานส่วนนี้</span>
+          <span style="font-weight:700;color:${statusColor}">${d.progress_pct}%</span>
+        </div>
+        <div style="height:8px;background:var(--surface3);border-radius:99px;overflow:hidden">
+          <div style="height:100%;width:${d.progress_pct}%;background:${statusColor};border-radius:99px"></div>
+        </div>
+      </div>
+      ${photoGrid}
+      ${d.description?`<div style="background:var(--surface2);border-radius:10px;padding:12px;margin-bottom:12px"><div style="font-size:.72rem;color:var(--muted);margin-bottom:4px">รายละเอียด</div><div style="font-size:.88rem;line-height:1.6">${d.description}</div></div>`:""}
+      <div style="font-size:.75rem;color:var(--muted);margin-bottom:12px">รายงานโดย: ${d.reporter_name||"ไม่ทราบ"} • ${d.created_at||""}</div>
+      ${reviewSection}`;
+
+    // Show review buttons only for manager/admin on pending reports
+    const footer = document.getElementById("detail-footer");
+    footer.style.display = (["admin","manager"].includes(userRole) && d.status==="รอตรวจสอบ") ? "flex" : "none";
+  } catch(e) {
+    document.getElementById("detail-body").innerHTML = emptyState("❌","โหลดรายละเอียดไม่สำเร็จ");
+  }
+}
+
+async function reviewReport(status) {
+  const note = prompt(`หมายเหตุสำหรับ "${status}" (ไม่บังคับ):`);
+  if (note === null) return;
+  try {
+    const r = await fetch(`/api/reports/review/${currentReportId}`, {
+      method:"PUT", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({status, reviewer_note:note})
+    });
+    if (!r.ok) throw new Error("failed");
+    closeSheet("reportDetailSheet");
+    showToast(`✅ ${status}รายงานสำเร็จ`);
+    await loadReports();
+  } catch(e) { showToast("❌ เกิดข้อผิดพลาด"); }
+}
+
+// ═══ BOQ DETAIL ═══
+async function openBoqDetail(boqId) {
+  const boq = allBoq.find(b=>b.id===boqId);
+  if (!boq) return;
+  document.getElementById("boq-detail-title").textContent = `${boq.item_no?boq.item_no+". ":""}${boq.description}`;
+  const related = allReports.filter(r=>r.boq_item_id===boqId);
+  const col = boqPctColor(boq.progress_pct);
+  document.getElementById("boq-detail-body").innerHTML = `
+    <div style="background:var(--surface2);border-radius:12px;padding:14px;margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+        <span class="${catClass(boq.category)}">${boq.category}</span>
+        <span style="font-size:1.2rem;font-weight:800;color:${col};font-family:'IBM Plex Mono',monospace">${boq.progress_pct}%</span>
+      </div>
+      <div style="height:8px;background:var(--surface3);border-radius:99px;overflow:hidden;margin-bottom:10px">
+        <div style="height:100%;width:${boq.progress_pct}%;background:${col};border-radius:99px"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:.8rem">
+        <div><span style="color:var(--muted)">ปริมาณงาน:</span> ${boq.quantity.toLocaleString()} ${boq.unit}</div>
+        <div><span style="color:var(--muted)">ราคาต่อหน่วย:</span> ฿${(boq.unit_price||0).toLocaleString()}</div>
+        <div style="grid-column:span 2"><span style="color:var(--muted)">มูลค่ารวม:</span> <b>฿${(boq.total_price||0).toLocaleString()}</b></div>
+      </div>
+    </div>
+    <div style="font-size:.8rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">รายงานที่เกี่ยวข้อง (${related.length})</div>
+    ${related.length ? related.map(r=>{
+      const pc={"อนุมัติ":"pill-green","รอตรวจสอบ":"pill-amber","ไม่อนุมัติ":"pill-red"}[r.status]||"pill-gray";
+      return `<div class="list-item" style="padding:12px 0;border-bottom:1px solid rgba(48,54,61,.4)" onclick="openReportDetail(${r.id})">
+        <div style="flex:1">
+          <div style="font-size:.88rem;font-weight:600">${r.title}</div>
+          <div style="font-size:.73rem;color:var(--muted);margin-top:2px">${r.report_date} • ${r.workers_count} คน</div>
+        </div>
+        <div style="text-align:right">
+          <span class="pill ${pc}">${r.status}</span>
+          <div style="font-size:.8rem;font-weight:700;margin-top:4px">${r.progress_pct}%</div>
+        </div>
+      </div>`;
+    }).join("") : `<div style="text-align:center;padding:24px;color:var(--muted);font-size:.85rem">ยังไม่มีรายงานสำหรับงานนี้</div>`}
+    <div style="height:16px"></div>`;
+  openSheet("boqDetailSheet");
+}
+
+// ═══ LIGHTBOX ═══
+function openLightbox(idx) {
+  lightboxIndex = idx;
+  updateLightbox();
+  document.getElementById("lightbox").classList.add("open");
+}
+function closeLightbox() { document.getElementById("lightbox").classList.remove("open"); }
+function lightboxNext() { lightboxIndex=(lightboxIndex+1)%lightboxPhotos.length; updateLightbox(); }
+function lightboxPrev() { lightboxIndex=(lightboxIndex-1+lightboxPhotos.length)%lightboxPhotos.length; updateLightbox(); }
+function updateLightbox() {
+  const p = lightboxPhotos[lightboxIndex];
+  if (!p) return;
+  document.getElementById("lightbox-img").src = `/uploads/${p.filename}`;
+  document.getElementById("lightbox-caption").textContent = p.caption||"";
+  document.getElementById("lightbox-counter").textContent = `${lightboxIndex+1} / ${lightboxPhotos.length}`;
+}
+
+// ═══ NAV ═══
+function switchTab(tab) {
+  currentTab = tab;
+  ["reports","boq","overview"].forEach(t=>{
+    document.getElementById("pg-"+t).style.display = t===tab ? "block" : "none";
+    document.getElementById("tab-"+t).classList.toggle("active",t===tab);
+  });
+  if (tab==="overview") { updateOverview(); renderOvBoq(); }
+}
+
+function openAddReport() {
+  populateBoqSelect();
+  openSheet("addReportSheet");
+}
+
+// ═══ SHEETS ═══
+function openSheet(id) { document.getElementById(id).classList.add("open"); }
+function closeSheet(id,e) {
+  if (e && e.target!==document.getElementById(id)) return;
+  document.getElementById(id).classList.remove("open");
+}
+
+// ═══ TOAST ═══
+function showToast(msg) {
+  const t=document.getElementById("toast");
+  t.textContent=msg; t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"),2800);
+}
+
+// ═══ CLOCK ═══
+function updateClock(){
+  const n=new Date();
+  document.getElementById("clock").textContent=n.getHours().toString().padStart(2,"0")+":"+n.getMinutes().toString().padStart(2,"0");
+}
+
+// ═══ EMPTY ═══
+function emptyState(icon,text){
+  return `<div class="empty-state"><span class="empty-icon">${icon}</span><div class="empty-text" style="white-space:pre-line">${text}</div></div>`;
+}
+
+// ═══ KEYBOARD ═══
+document.addEventListener("keydown",e=>{
+  if (e.key==="Escape") {
+    if (document.getElementById("lightbox").classList.contains("open")) closeLightbox();
+    else ["reportDetailSheet","boqDetailSheet","addReportSheet","boqDetail"].forEach(id=>{
+      const el=document.getElementById(id); if(el&&el.classList.contains("open")) el.classList.remove("open");
+    });
+  }
+  if (document.getElementById("lightbox").classList.contains("open")) {
+    if (e.key==="ArrowRight") lightboxNext();
+    if (e.key==="ArrowLeft")  lightboxPrev();
+  }
+});
+</script>
+</body>
+</html>
